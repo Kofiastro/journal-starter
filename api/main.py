@@ -7,13 +7,7 @@ from api.routers.journal_router import router as journal_router
 
 load_dotenv(override=True)
 
-# TODO: Setup basic console logging
-# Hint: Use logging.basicConfig() with level=logging.INFO
-# Steps:
-# 1. Configure logging with basicConfig()
-# 2. Set level to logging.INFO
-# 3. Add console handler
-# 4. Test by adding a log message when the app starts
+
 
 logging.basicConfig(level=logging.INFO)
 logging.info("Starting Journal API...")
