@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException
 
 from api.models.entry import Entry, EntryCreate
 from api.repositories.postgres_repository import PostgresDB
+from api.services import llm_service
 from api.services.entry_service import EntryService
 
 router = APIRouter()
@@ -133,4 +134,13 @@ async def analyze_entry(entry_id: str, entry_service: EntryService = Depends(get
     4. Call llm_service.analyze_journal_entry(entry_text)
     5. Return the analysis result with entry_id and created_at timestamp
     """
-    raise HTTPException(status_code=501, detail="Implement this endpoint - see Learn to Cloud curriculum")
+    fetch= await entry_service.get_entry(entry_id)
+    if not fetch:
+        raise HTTPException(status_code=404, detail="Entry not found")
+    entry_text = f"{fetch['work']} {fetch['struggle']} {fetch['intention']}"
+    analysis = await llm_service.analyze_journal_entry(entry_id, entry_text)
+    return {
+        "entry_id": entry_id,
+        "created_at": fetch["created_at"],
+        **analysis
+    }
