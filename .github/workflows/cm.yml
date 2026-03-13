@@ -2,7 +2,7 @@ name: Continuous Integration and Deployment for FasTAPI Application
 
 on:
   push:
-    branches: [main]
+    branches: ["*"]
 
 jobs:
   build-and-test:
