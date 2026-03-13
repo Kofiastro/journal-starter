@@ -6,7 +6,6 @@
 # from google.cloud import aiplatform
 import json
 from datetime import UTC, datetime
-
 from openai import OpenAI
 
 client=OpenAI()
