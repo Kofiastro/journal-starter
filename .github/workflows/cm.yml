@@ -1,4 +1,4 @@
-name: CI
+name: Continuous Integration and Deployment for FasTAPI Application
 
 on:
   push:
