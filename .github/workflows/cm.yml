@@ -1,4 +1,4 @@
-name: CI
+name: Continuous Integration and Deployment for FasTAPI Application
 
 on:
   push:
@@ -15,22 +15,37 @@ jobs:
         with:
           python-version: '3.11'
       
+      - name: install uv
+        run: pip install uv
+      
       - name: Install dependencies
-        run: pip install -r requirements.txt
-      
+        run: uv sync
+
       - name: Run tests
-        run: pytest
-        
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
+        run: uv run pytest
+
+        #AmAzon Configure Credentials
+      - name: Configure Aws credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+        #Amazon ECR login
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
       
+        #Build and push Docker image to Amazon ECR
       - name: Build Docker image
-        run: docker build -t myapp:${{ github.sha }} .
-      
-      - name: Login to Registry
-        run: echo ${{ secrets.REGISTRY_PASSWORD }} | docker login -u ${{ secrets.REGISTRY_USER }} --password-stdin
-      
-      - name: Push image
-        run: docker push myapp:${{ github.sha }}
+        run: docker build -t journalapi:${{ github.sha }} .
+
+        #Tag the image with the ECR repository URI
+      - name: Tag Docker image
+        run: docker tag journalapi:${{ github.sha }}362976989244.dkr.ecr.us-east-1.amazonaws.com/jj/journalapi:${{ github.sha }}
+
+        #Push the image to Amazon ECR
+      - name: Push Docker image to Amazon ECR
+        run: docker push 362976989244.dkr.ecr.us-east-1.amazonaws.com/jj/journalapi:${{ github.sha }}
+
+  
