@@ -48,9 +48,10 @@ jobs:
           done
 
       - name: Initialize database schema
+        run: |
+          psql -h postgres -U postgres -d testdb -f database_setup.sql
         env:
-          DATABASE_URL: postgresql://postgres:postgres@postgres:5432/testdb
-        run: psql $DATABASE_URL -f database_setup.sql
+          PGPASSWORD: postgres
 
       - name: Run tests
         env:  
