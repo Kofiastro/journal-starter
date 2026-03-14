@@ -22,6 +22,8 @@ jobs:
         run: uv sync
 
       - name: Run tests
+        env:  
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/testdb
         run: uv run pytest
 
         #AmAzon Configure Credentials
