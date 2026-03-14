@@ -24,6 +24,7 @@ jobs:
       - name: Run tests
         env:  
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/testdb
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: uv run pytest
 
         #AmAzon Configure Credentials
