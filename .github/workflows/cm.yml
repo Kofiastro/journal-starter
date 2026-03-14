@@ -36,12 +36,19 @@ jobs:
       
       - name: Install dependencies
         run: uv sync
+      - name: Install PostgreSQL client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+
+      - name: Initialize database schema
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@postgres:5432/testdb
+        run: psql $DATABASE_URL -f database_setup.sql
 
       - name: Run tests
         env:  
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/testdb
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-        run: uv run pytest
+        run: uv run pytest -vv
 
         #AmAzon Configure Credentials
       - name: Configure Aws credentials
