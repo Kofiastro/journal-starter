@@ -49,20 +49,9 @@ jobs:
         run: uv run pytest -vv
 
 
-  build-image:
+  build-push-image:
     runs-on: ubuntu-latest
     needs: test
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Build Docker image
-        run: docker build -t journalapi:${{ github.sha }} .
-
-
-  push-image:
-    runs-on: ubuntu-latest
-    needs: build-image
 
     steps:
       - uses: actions/checkout@v4
@@ -76,6 +65,9 @@ jobs:
 
       - name: Login to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build Docker image
+        run: docker build -t journalapi:${{ github.sha }} .
 
       - name: Tag Docker image
         run: docker tag journalapi:${{ github.sha }} 362976989244.dkr.ecr.us-east-1.amazonaws.com/jj/journalapi:${{ github.sha }}
