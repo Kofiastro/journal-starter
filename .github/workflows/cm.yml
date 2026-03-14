@@ -7,6 +7,22 @@ on:
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: testdb
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+          
     steps:
       - uses: actions/checkout@v4
       
@@ -44,8 +60,9 @@ jobs:
         run: docker build -t journalapi:${{ github.sha }} .
 
         #Tag the image with the ECR repository URI
-      - name: Tag Docker image
-        run: docker tag journalapi:${{ github.sha }}362976989244.dkr.ecr.us-east-1.amazonaws.com/jj/journalapi:${{ github.sha }}
+      - name: Tag Docker image 
+        run: docker tag journalapi:${{ github.sha }} \
+          362976989244.dkr.ecr.us-east-1.amazonaws.com/jj/journalapi:${{ github.sha }}
 
         #Push the image to Amazon ECR
       - name: Push Docker image to Amazon ECR
