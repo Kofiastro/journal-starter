@@ -1,13 +1,14 @@
-name: Continuous Integration and Deployment for FasTAPI Application
+name: Continuous Integration and Deployment for FastAPI Application
 
 on:
   push:
     branches: ["*"]
 
 jobs:
-  build-and-test:
+
+  test:
     runs-on: ubuntu-latest
-    
+
     services:
       postgres:
         image: postgres:15
@@ -17,35 +18,23 @@ jobs:
           POSTGRES_DB: testdb
         ports:
           - 5432:5432
-        options: >-
-          --health-cmd="pg_isready -U postgres"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=5
-          
+
     steps:
       - uses: actions/checkout@v4
       
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
-      
-      - name: install uv
+          python-version: "3.11"
+
+      - name: Install uv
         run: pip install uv
-      
+
       - name: Install dependencies
         run: uv sync
+
       - name: Install PostgreSQL client
         run: sudo apt-get update && sudo apt-get install -y postgresql-client
-        
-      - name: Wait for PostgreSQL
-        run: |
-          for i in {1..10}; do
-          pg_isready -h localhost -p 5432 -U postgres && break
-            echo "Waiting for postgres..."
-            sleep 3
-          done
 
       - name: Initialize database schema
         run: |
@@ -54,33 +43,42 @@ jobs:
           PGPASSWORD: postgres
 
       - name: Run tests
-        env:  
+        env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/testdb
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: uv run pytest -vv
 
-        #AmAzon Configure Credentials
-      - name: Configure Aws credentials
+
+  build-image:
+    runs-on: ubuntu-latest
+    needs: test
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: docker build -t journalapi:${{ github.sha }} .
+
+
+  push-image:
+    runs-on: ubuntu-latest
+    needs: build-image
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
 
-        #Amazon ECR login
       - name: Login to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v2
-      
-        #Build and push Docker image to Amazon ECR
-      - name: Build Docker image
-        run: docker build -t journalapi:${{ github.sha }} .
 
-        #Tag the image with the ECR repository URI
-      - name: Tag Docker image 
+      - name: Tag Docker image
         run: docker tag journalapi:${{ github.sha }} 362976989244.dkr.ecr.us-east-1.amazonaws.com/jj/journalapi:${{ github.sha }}
 
-        #Push the image to Amazon ECR
-      - name: Push Docker image to Amazon ECR
+      - name: Push Docker image
         run: docker push 362976989244.dkr.ecr.us-east-1.amazonaws.com/jj/journalapi:${{ github.sha }}
-
-  
