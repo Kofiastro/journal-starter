@@ -107,12 +107,10 @@ jobs:
         run: docker build -t journalapi:${{ github.sha }} .
 
       - name: Tag Docker image
-        run: docker tag journalapi:${{ github.sha }} \
-          362976989244.dkr.ecr.us-east-1.amazonaws.com/jj/journalapi:${{ github.sha }}
+        run: docker tag journalapi:${{ github.sha }} 362976989244.dkr.ecr.us-east-1.amazonaws.com/jj/journalapi:${{ github.sha }}
 
       - name: Tag Docker image latest
-        run: docker tag journalapi:${{ github.sha }} \
-          362976989244.dkr.ecr.us-east-1.amazonaws.com/jj/journalapi:latest
+        run: docker tag journalapi:${{ github.sha }} 362976989244.dkr.ecr.us-east-1.amazonaws.com/jj/journalapi:latest
 
       - name: Push Docker image to Amazon ECR
         run: |
