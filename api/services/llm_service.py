@@ -6,12 +6,12 @@
 # from google.cloud import aiplatform
 import json
 from datetime import UTC, datetime
+
 from openai import OpenAI
 
 
 async def analyze_journal_entry(entry_id: str, entry_text: str) -> dict:
-    
-    client=OpenAI()
+    client = OpenAI()
     """
     Analyze a journal entry using your chosen LLM API.
 

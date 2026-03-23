@@ -13,6 +13,10 @@ dependencies = [
     "asyncpg",
     "pytest>=9.0.2",
     "openai>=2.21.0",
+    "opentelemetry-instrumentation-fastapi>=0.61b0",
+    "opentelemetry-sdk>=1.40.0",
+    "opentelemetry-exporter-prometheus>=0.61b0",
+    "prometheus-client>=0.24.1",
 ]
 
 [project.optional-dependencies]

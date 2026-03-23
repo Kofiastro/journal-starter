@@ -152,9 +152,9 @@ async def analyze_entry(entry_id: str, entry_service: EntryService = Depends(get
     try:
         analysis = await llm_service.analyze_journal_entry(entry_id, entry_text)
     except NotImplementedError:
-        raise HTTPException(status_code=501, detail="LLM analysis not yet implemented")
+        raise HTTPException(status_code=501, detail="LLM analysis not yet implemented") from None
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}") from e
     return {
         "entry_id": entry_id,
         "created_at": fetch["created_at"],
