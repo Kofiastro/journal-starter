@@ -1,9 +1,11 @@
 FROM python:3.12-slim
 
+# install uv from the official container image
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /usr/local/bin/
+
 WORKDIR /app
 
-# install uv
-RUN pip install --no-cache-dir uv
+ENV PYTHONPATH=/app
 
 # copy dependency files first
 COPY pyproject.toml uv.lock ./

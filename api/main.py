@@ -24,5 +24,10 @@ FastAPIInstrumentor.instrument_app(app)
 # Expose Prometheus metrics at /metrics
 Instrumentator().instrument(app).expose(app)
 
+
+@app.get("/health")
+async def health_check() -> dict[str, str]:
+    return {"status": "ok"}
+
 # Existing router
 app.include_router(journal_router)
