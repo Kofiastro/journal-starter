@@ -43,13 +43,15 @@ Key steps:
 
 1. Base image: python:3.12-slim
 2. Working directory: /app
-3. Dependency manager: uv installed via pip
-4. Dependency layer optimization:
+3. Dependency manager: uv copied from official uv container image
+4. Runtime environment variable set for imports:
+   - ENV PYTHONPATH=/app
+5. Dependency layer optimization:
    - Copy pyproject.toml and uv.lock first
    - Run uv sync --no-dev
-5. Copy full application source
-6. Expose port 8000
-7. Start server with uvicorn (api.main:app)
+6. Copy full application source
+7. Expose port 8000
+8. Start server with uvicorn (api.main:app)
 
 ### 3.2 Runtime Entrypoint
 
@@ -190,9 +192,10 @@ Kubernetes manifests are in k8s/:
 Deployment characteristics:
 
 - 2 replicas
-- ClusterIP service
-- Readiness and liveness probes (TCP on 8000)
-- Secret-backed env vars for DATABASE_URL and OpenAI settings
+- LoadBalancer service for external reachability
+- Readiness and liveness probes (HTTP GET /health on 8000)
+- Secret-backed env loading via envFrom using journal-secrets
+- Application health endpoint exposed at /health
 
 Service exposure:
 
