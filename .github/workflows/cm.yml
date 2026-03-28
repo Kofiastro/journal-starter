@@ -1,5 +1,8 @@
 name: Continuous Integration and Deployment for FastAPI Application
 
+permissions:
+  contents: read
+
 on:
   push:
     branches: ["main"]
