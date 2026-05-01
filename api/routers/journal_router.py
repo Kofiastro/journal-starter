@@ -2,7 +2,7 @@ from collections.abc import AsyncGenerator
 
 from fastapi import APIRouter, Depends, HTTPException
 
-from api.models.entry import Entry, EntryCreate
+from api.models.entry import Entry, EntryCreate, EntryUpdate
 from api.repositories.postgres_repository import PostgresDB
 from api.services import llm_service
 from api.services.entry_service import EntryService
@@ -13,6 +13,7 @@ router = APIRouter()
 async def get_entry_service() -> AsyncGenerator[EntryService, None]:
     async with PostgresDB() as db:
         yield EntryService(db)
+
 
 @router.post("/entries")
 async def create_entry(entry_data: EntryCreate, entry_service: EntryService = Depends(get_entry_service)):
@@ -34,15 +35,19 @@ async def create_entry(entry_data: EntryCreate, entry_service: EntryService = De
             "entry": created_entry
         }
     except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Error creating entry: {str(e)}") from e
+        raise HTTPException(
+            status_code=400, detail=f"Error creating entry: {str(e)}") from e
 
 # Implements GET /entries endpoint to list all journal entries
 # Example response: [{"id": "123", "work": "...", "struggle": "...", "intention": "..."}]
+
+
 @router.get("/entries")
 async def get_all_entries(entry_service: EntryService = Depends(get_entry_service)):
     """Get all journal entries."""
     result = await entry_service.get_all_entries()
     return {"entries": result, "count": len(result)}
+
 
 @router.get("/entries/{entry_id}")
 async def get_entry(entry_id: str, entry_service: EntryService = Depends(get_entry_service)):
@@ -66,23 +71,32 @@ async def get_entry(entry_id: str, entry_service: EntryService = Depends(get_ent
 
     Hint: Check the update_entry endpoint for similar patterns
     """
-    result= await entry_service.get_entry(entry_id)
+    result = await entry_service.get_entry(entry_id)
     if not result:
         raise HTTPException(status_code=404, detail="Entry not found")
     return result
 
-@router.patch("/entries/{entry_id}")
-async def update_entry(entry_id: str, entry_update: dict, entry_service: EntryService = Depends(get_entry_service)):
-    """Update a journal entry"""
-    result = await entry_service.update_entry(entry_id, entry_update)
-    if not result:
 
+@router.patch("/entries/{entry_id}")
+async def update_entry(entry_id: str, entry_update: EntryUpdate, entry_service: EntryService = Depends(get_entry_service)):
+    """Update a journal entry (supports partial updates)."""
+    # Filter out None values to support partial updates
+    update_data = {k: v for k, v in entry_update.model_dump().items()
+                   if v is not None}
+
+    if not update_data:
+        raise HTTPException(status_code=400, detail="No fields to update")
+
+    result = await entry_service.update_entry(entry_id, update_data)
+    if not result:
         raise HTTPException(status_code=404, detail="Entry not found")
 
     return result
 
 # TODO: Implement DELETE /entries/{entry_id} endpoint to remove a specific entry
 # Return 404 if entry not found
+
+
 @router.delete("/entries/{entry_id}")
 async def delete_entry(entry_id: str, entry_service: EntryService = Depends(get_entry_service)):
     """
@@ -99,17 +113,19 @@ async def delete_entry(entry_id: str, entry_service: EntryService = Depends(get_
 
     Hint: Look at how the update_entry endpoint checks for existence
     """
-    result=await entry_service.get_entry(entry_id)
+    result = await entry_service.get_entry(entry_id)
     if not result:
         raise HTTPException(status_code=404, detail="Entry not Foud")
     await entry_service.delete_entry(entry_id)
-    return {"detail":"Entry deleted succesfully"}
+    return {"detail": "Entry deleted succesfully"}
+
 
 @router.delete("/entries")
 async def delete_all_entries(entry_service: EntryService = Depends(get_entry_service)):
     """Delete all journal entries"""
     await entry_service.delete_all_entries()
     return {"detail": "All entries deleted"}
+
 
 @router.post("/entries/{entry_id}/analyze")
 async def analyze_entry(entry_id: str, entry_service: EntryService = Depends(get_entry_service)):
@@ -145,16 +161,18 @@ async def analyze_entry(entry_id: str, entry_service: EntryService = Depends(get
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
     """
-    fetch= await entry_service.get_entry(entry_id)
+    fetch = await entry_service.get_entry(entry_id)
     if not fetch:
         raise HTTPException(status_code=404, detail="Entry not found")
     entry_text = f"{fetch['work']} {fetch['struggle']} {fetch['intention']}"
     try:
         analysis = await llm_service.analyze_journal_entry(entry_id, entry_text)
     except NotImplementedError:
-        raise HTTPException(status_code=501, detail="LLM analysis not yet implemented") from None
+        raise HTTPException(
+            status_code=501, detail="LLM analysis not yet implemented") from None
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}") from e
+        raise HTTPException(
+            status_code=500, detail=f"Analysis failed: {str(e)}") from e
     return {
         "entry_id": entry_id,
         "created_at": fetch["created_at"],
